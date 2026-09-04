@@ -933,7 +933,7 @@
             let html = escapeHtml(text);
 
             // Display math: $$...$$
-            html = html.replace(/\$\$([\s\S]+?)\$\$/g, (match, latex) => {
+            html = html.replace(/\$([^$]+?)\$/g, (match, latex) => {
                 try {
                     return katex.renderToString(latex.trim(), { throwOnError: false, displayMode: true });
                 } catch (e) { return match; }
