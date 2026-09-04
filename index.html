@@ -41,8 +41,8 @@
         }
 
         .header {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
             align-items: center;
             padding: 20px 40px;
             background: rgba(255, 255, 255, 0.9);
@@ -53,15 +53,11 @@
             z-index: 10;
         }
 
-        .logo {
-            font-size: 26px;
-            font-weight: 800;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-shadow: 0 0 20px var(--accent-glow);
-        }
+        .logo { justify-self: start; }
+
+        .question-counter { justify-self: center; }s
+
+        .fab { justify-self: end; }
 
         .sync-status {
             font-size: 12px;
@@ -786,7 +782,6 @@
     <div class="header">
         <div class="logo">💗 LET Review</div>
         <div class="question-counter" id="questionCounter"></div>
-        <div class="sync-status offline" id="syncStatus">● Offline</div>
         <button class="fab" onclick="promptPassword()" title="Edit Questions">⚙️</button>
     </div>
 
@@ -968,6 +963,7 @@
 
         function updateSyncStatus(status) {
             const el = document.getElementById('syncStatus');
+            if (!el) return;
             el.className = 'sync-status ' + status;
             if (status === 'online') el.textContent = '● Live';
             else if (status === 'syncing') el.textContent = '● Syncing...';
