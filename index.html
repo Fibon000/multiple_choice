@@ -137,19 +137,15 @@
         }
 
         .flashcard-container {
-            perspective: 1200px;
             height: auto;
-            min-height: 200px;
         }
 
         .flashcard {
             width: 100%;
             height: auto;
-            position: relative;
         }
 
         .flashcard-face {
-            position: relative;
             width: 100%;
             height: auto;
             border-radius: 20px;
@@ -194,6 +190,7 @@
             margin-bottom: 14px;
             word-break: break-word;
             text-align: justify;
+            white-space: pre-wrap;
         }
 
         .question-text .katex { font-size: 1.05em; }
@@ -414,6 +411,7 @@
             border-top: 1px solid transparent;
             word-break: break-word;
             overflow-wrap: break-word;
+            white-space: pre-wrap;
         }
 
         @keyframes fadeIn {
