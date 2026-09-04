@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashLearn — GitHub Flashcards</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+            min-height: 100vh;
+            color: #c9d1d9;
+            overflow-x: hidden;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(22, 27, 34, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #30363d;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #58a6ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress {
+            font-size: 14px;
+            color: #8b949e;
+            background: #21262d;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid #30363d;
+        }
+
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .flashcard-container {
+            perspective: 1000px;
+            height: 280px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border: 1px solid #30363d;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .flashcard-front {
+            background: linear-gradient(145deg, #161b22, #1c2128);
+        }
+
+        .flashcard-back {
+            background: linear-gradient(145deg, #1c2128, #21262d);
+            transform: rotateY(180deg);
+            justify-content: flex-start;
+            overflow-y: auto;
+        }
+
+        .category-tag {
+            display: inline-block;
+            padding: 6px 14px;
+            background: #238636;
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+        }
+
+        .question-text {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f0f6fc;
+            line-height: 1.3;
+            margin-bottom: 15px;
+        }
+
+        .hint-text {
+            font-size: 14px;
+            color: #8b949e;
+            font-style: italic;
+        }
+
+        .result-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .result-badge.correct {
+            background: #238636;
+            color: white;
+        }
+
+        .result-badge.incorrect {
+            background: #da3633;
+            color: white;
+        }
+
+        .explanation-title {
+            font-size: 22px;
+            color: #f0f6fc;
+            margin-bottom: 15px;
+        }
+
+        .explanation-content {
+            text-align: left;
+            width: 100%;
+        }
+
+        .rationalization-item {
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .rationalization-item.correct-opt {
+            border-left-color: #3fb950;
+            background: rgba(63, 185, 80, 0.1);
+        }
+
+        .rationalization-item.wrong-opt {
+            border-left-color: #f85149;
+            background: rgba(248, 81, 73, 0.1);
+        }
+
+        .rationalization-item .opt-label {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rationalization-item.correct-opt .opt-label {
+            color: #3fb950;
+        }
+
+        .rationalization-item.wrong-opt .opt-label {
+            color: #f85149;
+        }
+
+        .rationalization-item .opt-rationale {
+            font-size: 13px;
+            color: #c9d1d9;
+            line-height: 1.5;
+        }
+
+        .choices-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .choice-btn {
+            width: 100%;
+            padding: 18px 24px;
+            background: #21262d;
+            border: 2px solid #30363d;
+            border-radius: 12px;
+            color: #c9d1d9;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .choice-btn:hover:not(:disabled) {
+            border-color: #58a6ff;
+            background: #1c2128;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.15);
+        }
+
+        .choice-btn:disabled {
+            cursor: default;
+        }
+
+        .choice-btn.correct {
+            border-color: #238636;
+            background: rgba(35, 134, 54, 0.15);
+            color: #3fb950;
+        }
+
+        .choice-btn.incorrect {
+            border-color: #da3633;
+            background: rgba(218, 54, 51, 0.15);
+            color: #f85149;
+            opacity: 0.7;
+        }
+
+        .choice-btn.selected-wrong {
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .choice-indicator {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+            background: #21262d;
+            color: #c9d1d9;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: #30363d;
+        }
+
+        .btn-primary {
+            background: #238636;
+            border-color: #238636;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2ea043;
+        }
+
+        .btn-secondary {
+            background: transparent;
+        }
+
+        .btn-danger {
+            background: #da3633;
+            border-color: #da3633;
+            color: white;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border-style: dashed;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .editor-panel {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: #161b22;
+            border-left: 1px solid #30363d;
+            z-index: 100;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            box-shadow: -4px 0 24px rgba(0,0,0,0.4);
+        }
+
+        .editor-panel.open {
+            right: 0;
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #30363d;
+            background: #0d1117;
+        }
+
+        .editor-header h3 {
+            color: #f0f6fc;
+            font-size: 18px;
+        }
+
+        .editor-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #8b949e;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 10px 14px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            color: #c9d1d9;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: #58a6ff;
+        }
+
+        .option-field {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .option-field input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #238636;
+            cursor: pointer;
+        }
+
+        .option-field input[type="text"] {
+            flex: 1;
+        }
+
+        .option-field input.rationale-input {
+            flex: 2;
+            font-size: 12px;
+            color: #8b949e;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #238636;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(35, 134, 54, 0.4);
+            transition: all 0.2s;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(35, 134, 54, 0.6);
+        }
+
+        .completion-screen {
+            position: fixed;
+            inset: 0;
+            background: rgba(13, 17, 23, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(10px);
+        }
+
+        .completion-screen.show {
+            display: flex;
+        }
+
+        .completion-content {
+            text-align: center;
+            padding: 40px;
+            background: #161b22;
+            border-radius: 20px;
+            border: 1px solid #30363d;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .completion-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .completion-content h2 {
+            font-size: 32px;
+            color: #f0f6fc;
+            margin-bottom: 10px;
+        }
+
+        .completion-content p {
+            color: #8b949e;
+            margin-bottom: 30px;
+        }
+
+        .score-display {
+            font-size: 48px;
+            font-weight: 700;
+            color: #58a6ff;
+            margin-bottom: 30px;
+        }
+
+        .btn-large {
+            padding: 16px 32px;
+            font-size: 16px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background: #21262d;
+            position: fixed;
+            top: 65px;
+            left: 0;
+            z-index: 9;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #238636, #58a6ff);
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 600px) {
+            .question-text { font-size: 20px; }
+            .flashcard-container { height: 320px; }
+            .editor-panel { width: 100%; right: -100%; }
+            .header { padding: 15px 20px; }
+            .main-container { padding: 20px 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">⚡ FlashLearn</div>
+        <div class="progress">Question <span id="currentQ">1</span> of <span id="totalQ">5</span></div>
+    </div>
+
+    <div class="main-container">
+        <div class="flashcard-container" id="flashcardContainer">
+            <div class="flashcard" id="flashcard">
+                <div class="flashcard-face flashcard-front">
+                    <div class="category-tag" id="categoryTag">GitHub Basics</div>
+                    <h2 class="question-text" id="questionText">Loading...</h2>
+                    <div class="hint-text">Select the best answer below</div>
+                </div>
+                <div class="flashcard-face flashcard-back">
+                    <div class="result-badge" id="resultBadge">✓ Correct</div>
+                    <h3 class="explanation-title" id="explanationTitle">Great job!</h3>
+                    <div class="explanation-content" id="explanationContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="choices-grid" id="choicesGrid"></div>
+
+        <div class="nav-buttons" id="navButtons">
+            <button class="btn btn-secondary" id="prevBtn" onclick="prevQuestion()">← Previous</button>
+            <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next →</button>
+        </div>
+    </div>
+
+    <div class="editor-panel" id="editorPanel">
+        <div class="editor-header">
+            <h3>📝 Question Editor</h3>
+            <button class="btn btn-small" onclick="toggleEditor()">✕</button>
+        </div>
+        <div class="editor-content">
+            <div class="form-group">
+                <label>Question</label>
+                <input type="text" id="editQuestion" placeholder="Enter your question...">
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <input type="text" id="editCategory" placeholder="e.g., GitHub Basics">
+            </div>
+            <div class="form-group">
+                <label>Options (check the correct one)</label>
+                <div id="editOptions"></div>
+                <button class="btn btn-small btn-outline" onclick="addOptionField()">+ Add Option</button>
+            </div>
+            <div class="editor-actions">
+                <button class="btn btn-primary" onclick="saveQuestion()">Save Question</button>
+                <button class="btn btn-danger" onclick="deleteCurrentQuestion()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="fab" onclick="toggleEditor()" title="Edit Questions">⚙️</button>
+
+    <div class="completion-screen" id="completionScreen">
+        <div class="completion-content">
+            <div class="completion-icon">🎉</div>
+            <h2>Demo Complete!</h2>
+            <p>You've gone through all the questions.</p>
+            <div class="score-display" id="scoreDisplay"></div>
+            <button class="btn btn-primary btn-large" onclick="restartQuiz()">Restart Demo</button>
+        </div>
+    </div>
+
+    <script>
+        let questions = [
+            {
+                id: 1,
+                category: "GitHub Basics",
+                question: "What is the primary purpose of a Pull Request (PR)?",
+                options: [
+                    { text: "To directly push code to the main branch", correct: false, rationale: "Direct pushes to main bypass review and are generally blocked by branch protection rules. PRs exist specifically to prevent this." },
+                    { text: "To propose changes and request code review before merging", correct: true, rationale: "Correct! PRs are the core collaboration feature in GitHub. They let you propose changes, discuss them with reviewers, run CI checks, and merge only when approved." },
+                    { text: "To delete a repository permanently", correct: false, rationale: "Deleting a repo is done in Settings > Danger Zone. PRs are about adding code, not removing repositories." },
+                    { text: "To fork a repository to your local machine", correct: false, rationale: "Forking creates a copy under your account on GitHub. Cloning copies it locally. PRs happen after you have code ready to merge." }
+                ]
+            },
+            {
+                id: 2,
+                category: "Git Concepts",
+                question: "What does 'git rebase' do compared to 'git merge'?",
+                options: [
+                    { text: "It creates a new merge commit preserving all history", correct: false, rationale: "That's what 'git merge' does. Merge preserves the exact branch history including all merge commits." },
+                    { text: "It moves your branch to the tip of another branch and replays your commits", correct: true, rationale: "Correct! Rebase rewrites history by moving your branch's base commit to the target branch's tip, then replaying your changes. This creates a linear history but rewrites commit hashes." },
+                    { text: "It deletes the current branch", correct: false, rationale: "'git branch -d' deletes branches. Rebase is about history manipulation, not deletion." },
+                    { text: "It stashes all uncommitted changes", correct: false, rationale: "'git stash' handles uncommitted changes. Rebase works with committed changes on a branch." }
+                ]
+            },
+            {
+                id: 3,
+                category: "GitHub Actions",
+                question: "When does a GitHub Actions workflow trigger by default?",
+                options: [
+                    { text: "Only when manually clicked in the Actions tab", correct: false, rationale: "While you CAN trigger workflows manually with 'workflow_dispatch', most workflows run automatically on events." },
+                    { text: "On every commit push, PR, or specified event in the YAML file", correct: true, rationale: "Correct! Workflows are event-driven. You define triggers like 'on: push', 'on: pull_request', or 'on: schedule' in your .github/workflows/*.yml file." },
+                    { text: "Every day at midnight automatically", correct: false, rationale: "Scheduled triggers require explicit 'on: schedule: cron' configuration. They don't run by default." },
+                    { text: "Only when the repository owner is online", correct: false, rationale: "GitHub Actions run on GitHub's cloud infrastructure, independent of anyone's online status." }
+                ]
+            },
+            {
+                id: 4,
+                category: "Branching Strategy",
+                question: "What is 'GitHub Flow' branching strategy?",
+                options: [
+                    { text: "A complex model with develop, release, and hotfix branches", correct: false, rationale: "That describes GitFlow. GitHub Flow is intentionally simpler than GitFlow." },
+                    { text: "A lightweight model: create branch, commit, PR, review, merge to main", correct: true, rationale: "Correct! GitHub Flow is simple: create a feature branch from main, make commits, open a PR, get review, merge to main, deploy. Perfect for continuous deployment." },
+                    { text: "A strategy that forbids any branching", correct: false, rationale: "Trunk-based development minimizes branches, but GitHub Flow explicitly uses feature branches for every change." },
+                    { text: "A paid GitHub Enterprise-only feature", correct: false, rationale: "GitHub Flow is a workflow pattern, not a feature. It's free and works on any GitHub repo." }
+                ]
+            },
+            {
+                id: 5,
+                category: "Security",
+                question: "What should you do if you accidentally commit a secret/API key to GitHub?",
+                options: [
+                    { text: "Just delete the file in the next commit", correct: false, rationale: "Deleting in a new commit doesn't remove it from Git history. The secret remains visible in previous commits forever." },
+                    { text: "Rewrite history to remove it, rotate the secret, and enable secret scanning", correct: true, rationale: "Correct! You must use 'git filter-repo' or BFG to rewrite history, immediately rotate/revoke the exposed credential, and enable GitHub Secret Scanning to prevent future leaks." },
+                    { text: "Make the repository private temporarily", correct: false, rationale: "Making it private doesn't remove the secret from history. Anyone with prior access or forks still has it." },
+                    { text: "Contact GitHub support to delete the commit", correct: false, rationale: "GitHub Support won't rewrite your history for you. You need to do it yourself or use automated tools." }
+                ]
+            }
+        ];
+
+        let currentIndex = 0;
+        let answered = false;
+        let scores = [];
+        let editingId = null;
+
+        function init() {
+            renderQuestion();
+            updateProgress();
+            setupEditor();
+        }
+
+        function renderQuestion() {
+            const q = questions[currentIndex];
+            answered = false;
+            
+            document.getElementById('currentQ').textContent = currentIndex + 1;
+            document.getElementById('totalQ').textContent = questions.length;
+            document.getElementById('categoryTag').textContent = q.category;
+            document.getElementById('questionText').textContent = q.question;
+            
+            document.getElementById('flashcard').classList.remove('flipped');
+            
+            const grid = document.getElementById('choicesGrid');
+            grid.innerHTML = '';
+            
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.innerHTML = `
+                    <span class="choice-letter">${String.fromCharCode(65 + idx)}.</span> ${opt.text}
+                    <span class="choice-indicator"></span>
+                `;
+                btn.onclick = () => selectAnswer(idx);
+                grid.appendChild(btn);
+            });
+            
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            document.getElementById('nextBtn').textContent = currentIndex === questions.length - 1 ? 'Finish' : 'Next →';
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        function selectAnswer(selectedIdx) {
+            if (answered) return;
+            answered = true;
+            
+            const q = questions[currentIndex];
+            const buttons = document.querySelectorAll('.choice-btn');
+            const correctIdx = q.options.findIndex(o => o.correct);
+            const isCorrect = selectedIdx === correctIdx;
+            
+            scores[currentIndex] = isCorrect;
+            
+            buttons.forEach((btn, idx) => {
+                btn.disabled = true;
+                if (idx === correctIdx) {
+                    btn.classList.add('correct');
+                    btn.querySelector('.choice-indicator').textContent = '✓';
+                } else if (idx === selectedIdx && !isCorrect) {
+                    btn.classList.add('incorrect', 'selected-wrong');
+                    btn.querySelector('.choice-indicator').textContent = '✗';
+                } else {
+                    btn.classList.add('incorrect');
+                    btn.style.opacity = '0.6';
+                }
+            });
+            
+            showExplanation(isCorrect, q);
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        function showExplanation(isCorrect, q) {
+            const badge = document.getElementById('resultBadge');
+            const title = document.getElementById('explanationTitle');
+            const content = document.getElementById('explanationContent');
+            
+            if (isCorrect) {
+                badge.textContent = '✓ Correct';
+                badge.className = 'result-badge correct';
+                title.textContent = 'Excellent!';
+            } else {
+                badge.textContent = '✗ Incorrect';
+                badge.className = 'result-badge incorrect';
+                title.textContent = 'Not quite right';
+            }
+            
+            let html = '';
+            q.options.forEach((opt, idx) => {
+                const letter = String.fromCharCode(65 + idx);
+                const type = opt.correct ? 'correct-opt' : 'wrong-opt';
+                const icon = opt.correct ? '✓' : '✗';
+                html += `
+                    <div class="rationalization-item ${type}">
+                        <div class="opt-label">${icon} Option ${letter}: ${opt.text}</div>
+                        <div class="opt-rationale">${opt.rationale}</div>
+                    </div>
+                `;
+            });
+            
+            content.innerHTML = html;
+            
+            setTimeout(() => {
+                document.getElementById('flashcard').classList.add('flipped');
+            }, 400);
+        }
+
+        function nextQuestion() {
+            if (currentIndex < questions.length - 1) {
+                currentIndex++;
+                renderQuestion();
+                updateProgress();
+            } else {
+                showCompletion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+                updateProgress();
+            }
+        }
+
+        function updateProgress() {
+            const pct = ((currentIndex + 1) / questions.length) * 100;
+            let bar = document.querySelector('.progress-bar');
+            if (!bar) {
+                const container = document.createElement('div');
+                container.className = 'progress-bar-container';
+                container.innerHTML = '<div class="progress-bar"></div>';
+                document.body.appendChild(container);
+                bar = container.querySelector('.progress-bar');
+            }
+            bar.style.width = pct + '%';
+        }
+
+        function showCompletion() {
+            const correct = scores.filter(s => s).length;
+            const total = questions.length;
+            const pct = Math.round((correct / total) * 100);
+            
+            document.getElementById('scoreDisplay').textContent = `${correct}/${total} (${pct}%)`;
+            document.getElementById('completionScreen').classList.add('show');
+        }
+
+        function restartQuiz() {
+            currentIndex = 0;
+            scores = [];
+            document.getElementById('completionScreen').classList.remove('show');
+            renderQuestion();
+            updateProgress();
+        }
+
+        function toggleEditor() {
+            document.getElementById('editorPanel').classList.toggle('open');
+            if (document.getElementById('editorPanel').classList.contains('open')) {
+                loadQuestionIntoEditor(currentIndex);
+            }
+        }
+
+        function setupEditor() {
+            loadQuestionIntoEditor(currentIndex);
+        }
+
+        function loadQuestionIntoEditor(idx) {
+            const q = questions[idx];
+            editingId = q.id;
+            document.getElementById('editQuestion').value = q.question;
+            document.getElementById('editCategory').value = q.category;
+            
+            const container = document.getElementById('editOptions');
+            container.innerHTML = '';
+            
+            q.options.forEach((opt) => {
+                addOptionField(opt.text, opt.rationale, opt.correct);
+            });
+        }
+
+        function addOptionField(text = '', rationale = '', correct = false) {
+            const container = document.getElementById('editOptions');
+            const div = document.createElement('div');
+            div.className = 'option-field';
+            div.innerHTML = `
+                <input type="radio" name="correctOpt" ${correct ? 'checked' : ''}>
+                <input type="text" placeholder="Answer text" value="${text}" class="opt-text">
+                <input type="text" placeholder="Why right/wrong?" value="${rationale}" class="rationale-input">
+            `;
+            container.appendChild(div);
+        }
+
+        function saveQuestion() {
+            const question = document.getElementById('editQuestion').value.trim();
+            const category = document.getElementById('editCategory').value.trim() || 'General';
+            
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+            
+            const fields = document.querySelectorAll('.option-field');
+            const options = [];
+            let hasCorrect = false;
+            
+            fields.forEach(field => {
+                const text = field.querySelector('.opt-text').value.trim();
+                const rationale = field.querySelector('.rationale-input').value.trim();
+                const isCorrect = field.querySelector('input[type="radio"]').checked;
+                
+                if (text) {
+                    options.push({ text, rationale: rationale || 'No explanation provided.', correct: isCorrect });
+                    if (isCorrect) hasCorrect = true;
+                }
+            });
+            
+            if (options.length < 2) {
+                alert('Please provide at least 2 options');
+                return;
+            }
+            
+            if (!hasCorrect) {
+                alert('Please mark one option as correct');
+                return;
+            }
+            
+            const newQ = {
+                id: editingId || Date.now(),
+                category,
+                question,
+                options
+            };
+            
+            if (editingId) {
+                const idx = questions.findIndex(q => q.id === editingId);
+                if (idx >= 0) questions[idx] = newQ;
+            } else {
+                questions.push(newQ);
+                currentIndex = questions.length - 1;
+            }
+            
+            renderQuestion();
+            updateProgress();
+            toggleEditor();
+        }
+
+        function deleteCurrentQuestion() {
+            if (questions.length <= 1) {
+                alert('You need at least one question!');
+                return;
+            }
+            
+            questions = questions.filter(q => q.id !== editingId);
+            if (currentIndex >= questions.length) currentIndex = questions.length - 1;
+            renderQuestion();
+            updateProgress();
+            toggleEditor();
+        }
+
+        init();
+    </script>
+</body>
+</html>
