@@ -40,6 +40,56 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        .category-selector {
+            position: relative;
+        }
+
+        .category-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px var(--shadow);
+            z-index: 10;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .category-dropdown.show {
+            display: block;
+        }
+
+        .category-option {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-primary);
+            transition: background 0.15s;
+        }
+
+        .category-option:hover {
+            background: var(--bg-secondary);
+        }
+
+        .category-option:first-child {
+            border-radius: 10px 10px 0 0;
+        }
+
+        .category-option:last-child {
+            border-radius: 0 0 10px 10px;
+        }
+
+        .category-option.create-new {
+            color: var(--accent);
+            font-weight: 700;
+            border-top: 1px dashed var(--border);
+        }
+
         #editQuestion:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 3px var(--accent-glow);
@@ -920,7 +970,10 @@
             </div>
             <div class="form-group">
                 <label>Category</label>
-                <input type="text" id="editCategory" placeholder="e.g., Math">
+                <div class="category-selector">
+                    <input type="text" id="editCategory" placeholder="Type or choose category..." autocomplete="off" oninput="filterCategories(this.value)" onfocus="showCategoryDropdown()">
+                    <div class="category-dropdown" id="categoryDropdown"></div>
+                </div>
             </div>
             <div class="form-group">
                 <label>Options — check the correct one</label>
@@ -984,6 +1037,52 @@
         let scores = {};
         let editingId = null;
         let editorUnlocked = false;
+
+        function getCategories() {
+            const cats = new Set(questions.map(q => q.category).filter(Boolean));
+            return Array.from(cats).sort();
+        }
+
+        function showCategoryDropdown() {
+            const input = document.getElementById('editCategory');
+            filterCategories(input.value);
+        }
+
+        function filterCategories(query) {
+            const dropdown = document.getElementById('categoryDropdown');
+            const cats = getCategories();
+            const q = query.trim().toLowerCase();
+            const matches = cats.filter(c => c.toLowerCase().includes(q));
+            
+            let html = '';
+            matches.forEach(cat => {
+                html += `<div class="category-option" onclick="selectCategory('${cat.replace(/'/g, "\\'")}')">${escapeHtml(cat)}</div>`;
+            });
+            
+            if (q && !cats.some(c => c.toLowerCase() === q)) {
+                html += `<div class="category-option create-new" onclick="selectCategory('${query.trim().replace(/'/g, "\\'")}')">Create "${escapeHtml(query.trim())}"</div>`;
+            }
+            
+            if (html) {
+                dropdown.innerHTML = html;
+                dropdown.classList.add('show');
+            } else {
+                dropdown.classList.remove('show');
+            }
+        }
+
+        function selectCategory(name) {
+            document.getElementById('editCategory').value = name;
+            document.getElementById('categoryDropdown').classList.remove('show');
+        }
+
+        document.addEventListener('click', (e) => {
+            const selector = document.querySelector('.category-selector');
+            if (selector && !selector.contains(e.target)) {
+                const dropdown = document.getElementById('categoryDropdown');
+                if (dropdown) dropdown.classList.remove('show');
+            }
+        });
 
         const defaultQuestions = [
             {
