@@ -931,21 +931,19 @@
         function renderMath(text) {
             if (!text || typeof text !== 'string') return text;
             let html = escapeHtml(text);
-
-            // Display math: $$...$$
-            html = html.replace(/\$([^$]+?)\$/g, (match, latex) => {
+        
+            html = html.replace(/\$\$([\s\S]+?)\$\$/g, (match, latex) => {
                 try {
                     return katex.renderToString(latex.trim(), { throwOnError: false, displayMode: true });
                 } catch (e) { return match; }
             });
-
-            // Inline math: $...$
+        
             html = html.replace(/\$([^$]+?)\$/g, (match, latex) => {
                 try {
                     return katex.renderToString(latex.trim(), { throwOnError: false, displayMode: false });
                 } catch (e) { return match; }
             });
-
+        
             return html;
         }
 
