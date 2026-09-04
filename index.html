@@ -854,6 +854,7 @@
             <input type="password" id="passwordInput" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPassword()">
             <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="checkPassword()">Unlock Editor</button>
             <div class="password-error" id="passwordError"></div>
+            <button class="btn btn-small btn-outline" style="width:100%;margin-top:12px;" onclick="closePassword()">Cancel</button>
         </div>
     </div>
 
@@ -1019,6 +1020,10 @@
                 document.getElementById('passwordInput').value = '';
                 document.getElementById('passwordInput').focus();
             }
+        }
+
+        function closePassword() {
+            document.getElementById('passwordOverlay').classList.remove('show');
         }
 
         // ==================== UI RENDERING ====================
