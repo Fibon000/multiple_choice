@@ -1072,8 +1072,7 @@
 
             document.getElementById('prevBtn').disabled = currentIndex === 0;
             const nextBtn = document.getElementById('nextBtn');
-            nextBtn.textContent = currentIndex === questions.length - 1 ? 'Finish 💗' : 'Next →';
-            nextBtn.disabled = !answered;
+            nextBtn.textContent = 'Next →';
         }
 
         function findSelectedIndex(q) {
@@ -1143,13 +1142,17 @@
         function nextQuestion() {
             if (currentIndex < questions.length - 1) {
                 currentIndex++;
-                answered = scores[currentIndex] !== undefined;
-                renderQuestion();
-                updateProgress();
-                renderDots();
             } else {
-                showCompletion();
+                if (Object.keys(scores).length === questions.length) {
+                    showCompletion();
+                    return;
+                }
+                currentIndex = 0;
             }
+            answered = scores[currentIndex] !== undefined;
+            renderQuestion();
+            updateProgress();
+            renderDots();
         }
 
         function prevQuestion() {
