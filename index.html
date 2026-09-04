@@ -24,9 +24,9 @@
             --accent-hover: #ff8fab;
             --accent-glow: rgba(255, 107, 157, 0.25);
             --correct: #ff6b9d;
-            --correct-bg: rgba(255, 107, 157, 0.12);
+            --correct-bg: rgba(255, 179, 198, 0.2);
             --wrong: #e74c3c;
-            --wrong-bg: rgba(231, 76, 60, 0.10);
+            --wrong-bg: rgba(255, 71, 87, 0.08);
             --shadow: rgba(255, 107, 157, 0.15);
         }
 
@@ -55,9 +55,6 @@
 
         .logo { justify-self: start; }
 
-        .question-counter { justify-self: center; }s
-
-        .fab { justify-self: end; }
 
         .sync-status {
             font-size: 12px;
@@ -78,15 +75,15 @@
         .main-container {
             max-width: 850px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 32px 20px;
             display: flex;
             flex-direction: column;
-            gap: 28px;
+            gap: 20px;
         }
 
         .flashcard-container {
             perspective: 1200px;
-            height: 300px;
+            height: 320px;
         }
 
         .flashcard {
@@ -97,10 +94,6 @@
             transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .flashcard.flipped {
-            transform: rotateY(180deg);
-        }
-
         .flashcard-face {
             position: absolute;
             width: 100%;
@@ -109,9 +102,9 @@
             border-radius: 20px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
+            justify-content: flex-start;
+            align-items: justify;
+            text-align: justify;
             border: 1px solid var(--border);
             box-shadow: 0 12px 40px var(--shadow);
         }
@@ -121,18 +114,10 @@
             overflow-y: auto;
         }
 
-        .flashcard-back {
-            background: linear-gradient(145deg, var(--bg-card), #fff0f3);
-            transform: rotateY(180deg);
-            justify-content: flex-start;
-            overflow-y: auto;
-            padding: 40px;
-        }
-
         .flashcard-scrollbox {
             width: 100%;
-            padding: 40px;
-            margin: auto 0;
+            padding: 32px;
+            margin: 0;
         }
 
         .category-tag {
@@ -150,11 +135,11 @@
         }
 
         .question-text {
-            font-size: 30px;
+            font-size: 26px;
             font-weight: 800;
             color: var(--text-primary);
             line-height: 1.3;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             word-break: break-word;
         }
 
@@ -255,14 +240,30 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 14px;
+            margin-top: 8px;
+        }
+
+        .choice-wrapper {
+            display: flex;
+            flex-direction: column;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .choice-wrapper:hover {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px var(--accent-glow);
         }
 
         .choice-btn {
             width: 100%;
-            padding: 20px 28px;
+            padding: 14px 20px;
             background: var(--bg-secondary);
-            border: 2px solid var(--border);
-            border-radius: 14px;
+            border: none;
+            border-radius: 0;
             color: var(--text-primary);
             font-size: 16px;
             font-weight: 600;
@@ -287,13 +288,6 @@
             transition: background 0.3s;
         }
 
-        .choice-btn:hover:not(:disabled) {
-            border-color: var(--accent);
-            background: var(--bg-card);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px var(--accent-glow);
-        }
-
         .choice-btn:hover:not(:disabled)::before {
             background: var(--accent);
         }
@@ -303,30 +297,70 @@
         }
 
         .choice-btn.correct {
-            border-color: var(--accent);
-            background: var(--correct-bg);
-            color: var(--accent);
-            box-shadow: 0 0 20px rgba(255, 107, 157, 0.2);
+            background: #e8f5e9;
+            color: #2e7d32;
         }
 
         .choice-btn.correct::before {
-            background: var(--accent);
+            background: #4caf50;
         }
 
         .choice-btn.incorrect {
-            border-color: var(--wrong);
-            background: var(--wrong-bg);
-            color: var(--wrong);
-            opacity: 0.75;
+            background: #ffebee;
+            color: #c62828;
+            opacity: 0.9;
         }
 
         .choice-btn.incorrect::before {
-            background: var(--wrong);
+            background: #ef5350;
         }
 
         .choice-btn.selected-wrong {
             animation: shake 0.5s ease;
-            border-color: var(--wrong);
+        }
+
+        .choice-indicator {
+            position: absolute;
+            right: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .choice-wrapper.correct-card {
+            border-color: #81c784;
+            box-shadow: 0 4px 16px rgba(76, 175, 80, 0.15);
+        }
+
+        .choice-wrapper.correct-card .choice-rationale {
+            background: #f1f8e9;
+            color: #558b2f;
+            border-top-color: #a5d6a7;
+        }
+
+        .choice-wrapper.wrong-card {
+            border-color: #ef5350;
+            box-shadow: 0 4px 16px rgba(239, 83, 80, 0.12);
+        }
+
+        .choice-wrapper.wrong-card .choice-rationale {
+            background: #ffebee;
+            color: #b71c1c;
+            border-top-color: #ffcdd2;
+        }
+
+        .choice-rationale {
+            padding: 10px 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease;
+            border-top: 1px solid transparent;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes shake {
@@ -422,38 +456,44 @@
 
         .editor-panel {
             position: fixed;
-            right: -420px;
-            top: 0;
-            width: 420px;
-            height: 100vh;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -45%) scale(0.96);
+            width: 92%;
+            max-width: 520px;
+            max-height: 90vh;
             background: linear-gradient(180deg, var(--bg-secondary), var(--bg-primary));
-            border-left: 1px solid var(--border);
+            border: 1px solid var(--border);
+            border-radius: 20px;
             z-index: 100;
-            transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow-y: auto;
-            box-shadow: -8px 0 32px var(--shadow);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 80px var(--shadow);
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .editor-panel.open {
-            right: 0;
+            opacity: 1;
+            pointer-events: all;
+            transform: translate(-50%, -50%) scale(1);
         }
 
         .editor-header {
+            flex-shrink: 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 24px;
+            padding: 20px 24px;
             border-bottom: 1px solid var(--border);
             background: rgba(255, 255, 255, 0.8);
         }
 
-        .editor-header h3 {
-            color: var(--text-primary);
-            font-size: 20px;
-            font-weight: 800;
-        }
-
         .editor-content {
+            flex: 1;
+            overflow-y: auto;
             padding: 24px;
             display: flex;
             flex-direction: column;
@@ -533,17 +573,14 @@
         }
 
         .fab {
-            position: relative;
-            bottom: auto;
-            right: auto;
-            margin: 20px 0 0 auto;
-            width: 56px;
-            height: 56px;
+            justify-self: end;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--accent), #c44569);
             border: none;
             color: white;
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
             box-shadow: 0 4px 16px rgba(255, 107, 157, 0.4);
             transition: all 0.3s;
@@ -625,11 +662,11 @@
         .progress-bar-container {
             width: 100%;
             height: 4px;
-            background: var(--bg-secondary);
+            background: var(--border);
             position: fixed;
-            top: 69px;
+            top: 83px;
             left: 0;
-            z-index: 9;
+            z-index: 11;
         }
 
         .progress-bar {
@@ -639,7 +676,10 @@
             box-shadow: 0 0 10px rgba(255, 107, 157, 0.5);
         }
 
+        .logo { justify-self: start; }
+
         .question-counter {
+            justify-self: center;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -764,7 +804,6 @@
         @media (max-width: 640px) {
             .question-text { font-size: 22px; }
             .flashcard-container { height: 340px; }
-            .editor-panel { width: 100%; right: -100%; }
             .header { padding: 16px 20px; flex-wrap: wrap; gap: 10px; }
             .main-container { padding: 24px 16px; }
             .choice-btn { padding: 16px 20px; }
@@ -795,14 +834,9 @@
                         <div class="hint-text" id="hintText">Please wait</div>
                     </div>
                 </div>
-                <div class="flashcard-face flashcard-back">
-                    <div class="result-badge" id="resultBadge">✓ Correct</div>
-                    <h3 class="explanation-title" id="explanationTitle">Great job!</h3>
-                    <div class="explanation-content" id="explanationContent"></div>
-                </div>
             </div>
         </div>
-
+    
         <div class="choices-grid" id="choicesGrid"></div>
 
         <div class="nav-buttons" id="navButtons">
@@ -886,6 +920,7 @@
         let questions = [];
         let currentIndex = 0;
         let answered = false;
+        let selectedAnswers = {};
         let scores = {};
         let editingId = null;
         let editorUnlocked = false;
@@ -1034,13 +1069,16 @@
 
             document.getElementById('categoryTag').textContent = q.category;
             document.getElementById('questionText').innerHTML = renderMath(q.question);
-            document.getElementById('hintText').textContent = answered ? 'Answered — see explanation above' : 'Select the best answer below';
+            document.getElementById('hintText').textContent = answered ? 'Answered — see explanations below' : 'Select the best answer below';
             document.getElementById('flashcard').classList.remove('flipped');
 
             const grid = document.getElementById('choicesGrid');
             grid.innerHTML = '';
 
             q.options.forEach((opt, idx) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'choice-wrapper';
+
                 const btn = document.createElement('button');
                 btn.className = 'choice-btn';
                 const letter = String.fromCharCode(65 + idx);
@@ -1049,92 +1087,51 @@
                 if (answered) {
                     btn.disabled = true;
                     const correctIdx = q.options.findIndex(o => o.correct);
+                    const selectedIdx = selectedAnswers[currentIndex];
                     if (idx === correctIdx) {
                         btn.classList.add('correct');
+                        wrapper.classList.add('correct-card');
                         btn.querySelector('.choice-indicator').textContent = '✓';
-                    } else if (scores[currentIndex] === false && idx === findSelectedIndex(q)) {
+                    } else if (idx === selectedIdx && !scores[currentIndex]) {
                         btn.classList.add('incorrect', 'selected-wrong');
+                        wrapper.classList.add('wrong-card');
                         btn.querySelector('.choice-indicator').textContent = '✗';
                     } else {
                         btn.classList.add('incorrect');
+                        wrapper.classList.add('wrong-card');
                         btn.style.opacity = '0.6';
                     }
+
+                    const rat = document.createElement('div');
+                    rat.className = 'choice-rationale';
+                    rat.innerHTML = renderMath(opt.rationale);
+                    wrapper.appendChild(rat);
                 } else {
                     btn.onclick = () => selectAnswer(idx);
                 }
-                grid.appendChild(btn);
-            });
 
-            if (answered) showExplanation(scores[currentIndex], q);
+                wrapper.insertBefore(btn, wrapper.firstChild);
+                grid.appendChild(wrapper);
+            });
 
             document.getElementById('prevBtn').disabled = currentIndex === 0;
             const nextBtn = document.getElementById('nextBtn');
-            nextBtn.textContent = 'Next →';
-        }
-
-        function findSelectedIndex(q) {
-            return q.options.findIndex(o => !o.correct);
+            nextBtn.textContent = currentIndex === questions.length - 1 ? 'Finish 💗' : 'Next →';
         }
 
         function selectAnswer(selectedIdx) {
             if (answered) return;
-            answered = true;
             const q = questions[currentIndex];
-            const buttons = document.querySelectorAll('.choice-btn');
             const correctIdx = q.options.findIndex(o => o.correct);
             const isCorrect = selectedIdx === correctIdx;
             scores[currentIndex] = isCorrect;
-
-            buttons.forEach((btn, idx) => {
-                btn.disabled = true;
-                if (idx === correctIdx) {
-                    btn.classList.add('correct');
-                    btn.querySelector('.choice-indicator').textContent = '✓';
-                } else if (idx === selectedIdx && !isCorrect) {
-                    btn.classList.add('incorrect', 'selected-wrong');
-                    btn.querySelector('.choice-indicator').textContent = '✗';
-                } else {
-                    btn.classList.add('incorrect');
-                    btn.style.opacity = '0.6';
-                }
-            });
-
-            showExplanation(isCorrect, q);
+            selectedAnswers[currentIndex] = selectedIdx;
+            answered = true;
+            renderQuestion();
             document.getElementById('nextBtn').disabled = false;
             renderDots();
         }
 
-        function showExplanation(isCorrect, q) {
-            const badge = document.getElementById('resultBadge');
-            const title = document.getElementById('explanationTitle');
-            const content = document.getElementById('explanationContent');
-
-            if (isCorrect) {
-                badge.textContent = '✓ Correct';
-                badge.className = 'result-badge correct';
-                title.textContent = 'Excellent!';
-            } else {
-                badge.textContent = '✗ Incorrect';
-                badge.className = 'result-badge incorrect';
-                title.textContent = 'Not quite right';
-            }
-
-            let html = '';
-            q.options.forEach((opt, idx) => {
-                const letter = String.fromCharCode(65 + idx);
-                const type = opt.correct ? 'correct-opt' : 'wrong-opt';
-                const icon = opt.correct ? '✓' : '✗';
-                html += `
-                    <div class="rationalization-item ${type}">
-                        <div class="opt-label">${icon} Option ${letter}: ${renderMath(opt.text)}</div>
-                        <div class="opt-rationale">${renderMath(opt.rationale)}</div>
-                    </div>
-                `;
-            });
-            content.innerHTML = html;
-
-            setTimeout(() => document.getElementById('flashcard').classList.add('flipped'), 350);
-        }
 
         function nextQuestion() {
             if (currentIndex < questions.length - 1) {
@@ -1205,6 +1202,7 @@
         function restartQuiz() {
             currentIndex = 0;
             scores = {};
+            selectedAnswers = {};
             answered = false;
             document.getElementById('completionScreen').classList.remove('show');
             renderQuestion();
@@ -1215,6 +1213,7 @@
         function resetProgress() {
             if (!confirm('Reset your progress?')) return;
             scores = {};
+            selectedAnswers = {};
             currentIndex = 0;
             answered = false;
             renderQuestion();
