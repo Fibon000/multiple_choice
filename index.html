@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GenEd LET Review</title>
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- KaTeX for math -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <style>
         :root {
             --bg-primary: #1a0b12;
@@ -107,7 +111,6 @@
             height: 100%;
             backface-visibility: hidden;
             border-radius: 20px;
-            padding: 40px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -119,6 +122,7 @@
 
         .flashcard-front {
             background: linear-gradient(145deg, var(--bg-secondary), var(--bg-card));
+            overflow-y: auto;
         }
 
         .flashcard-back {
@@ -126,6 +130,14 @@
             transform: rotateY(180deg);
             justify-content: flex-start;
             overflow-y: auto;
+            padding: 40px;
+        }
+
+        /* Scrollbox wrapper for long questions */
+        .flashcard-scrollbox {
+            width: 100%;
+            padding: 40px;
+            margin: auto 0;
         }
 
         .category-tag {
@@ -148,7 +160,10 @@
             color: var(--text-primary);
             line-height: 1.3;
             margin-bottom: 16px;
+            word-break: break-word;
         }
+
+        .question-text .katex { font-size: 1.05em; }
 
         .hint-text {
             font-size: 14px;
@@ -221,6 +236,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            word-break: break-word;
         }
 
         .rationalization-item.correct-opt .opt-label {
@@ -235,7 +251,10 @@
             font-size: 13px;
             color: var(--text-secondary);
             line-height: 1.6;
+            word-break: break-word;
         }
+
+        .rationalization-item .katex { font-size: 1.05em; }
 
         .choices-grid {
             display: grid;
@@ -257,7 +276,10 @@
             text-align: left;
             position: relative;
             overflow: hidden;
+            word-break: break-word;
         }
+
+        .choice-btn .katex { font-size: 1.05em; }
 
         .choice-btn::before {
             content: '';
@@ -753,6 +775,7 @@
             .choice-btn { padding: 16px 20px; }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -771,9 +794,11 @@
         <div class="flashcard-container" id="flashcardContainer">
             <div class="flashcard" id="flashcard">
                 <div class="flashcard-face flashcard-front">
-                    <div class="category-tag" id="categoryTag">Loading...</div>
-                    <h2 class="question-text" id="questionText">Connecting to database...</h2>
-                    <div class="hint-text" id="hintText">Please wait</div>
+                    <div class="flashcard-scrollbox">
+                        <div class="category-tag" id="categoryTag">Loading...</div>
+                        <h2 class="question-text" id="questionText">Connecting to database...</h2>
+                        <div class="hint-text" id="hintText">Please wait</div>
+                    </div>
                 </div>
                 <div class="flashcard-face flashcard-back">
                     <div class="result-badge" id="resultBadge">✓ Correct</div>
@@ -806,7 +831,7 @@
             </div>
             <div class="form-group">
                 <label>Category</label>
-                <input type="text" id="editCategory" placeholder="e.g., GitHub Basics">
+                <input type="text" id="editCategory" placeholder="e.g., Math">
             </div>
             <div class="form-group">
                 <label>Options — check the correct one</label>
@@ -851,7 +876,6 @@
 
     <script>
         // ==================== CONFIG ====================
-        // 🔴 PASTE YOUR FIREBASE CONFIG HERE (from Step 4 above)
         const firebaseConfig = {
           apiKey: "AIzaSyARnLfkYgFa_X-efzesSOCiWoo6QijaXu0",
           authDomain: "flashcard-e8dcb.firebaseapp.com",
@@ -861,7 +885,6 @@
           appId: "1:942708875601:web:e2f46e6ad3d5b98e93f370"
         };
 
-        // 🔒 Set your editor password here
         const ADMIN_PASSWORD = "122423";
         // ================================================
 
@@ -876,61 +899,69 @@
         const defaultQuestions = [
             {
                 id: 1,
-                category: "GitHub Basics",
-                question: "What is the primary purpose of a Pull Request (PR)?",
+                category: "Math Demo",
+                question: "What is the derivative of $x^2$ with respect to $x$?",
                 options: [
-                    { text: "To directly push code to the main branch", correct: false, rationale: "Direct pushes to main bypass review and are generally blocked by branch protection rules. PRs exist specifically to prevent this." },
-                    { text: "To propose changes and request code review before merging", correct: true, rationale: "Correct! PRs are the core collaboration feature in GitHub. They let you propose changes, discuss them with reviewers, run CI checks, and merge only when approved." },
-                    { text: "To delete a repository permanently", correct: false, rationale: "Deleting a repo is done in Settings > Danger Zone. PRs are about adding code, not removing repositories." },
-                    { text: "To fork a repository to your local machine", correct: false, rationale: "Forking creates a copy under your account on GitHub. Cloning copies it locally. PRs happen after you have code ready to merge." }
+                    { text: "$x$", correct: false, rationale: "The derivative of $x^2$ is not $x$. Use the power rule: $rac{d}{dx}(x^n) = nx^{n-1}$." },
+                    { text: "$2x$", correct: true, rationale: "Correct! Using the power rule: $rac{d}{dx}(x^2) = 2x^{2-1} = 2x$." },
+                    { text: "$x^2$", correct: false, rationale: "The derivative reduces the exponent by 1, so it cannot stay $x^2$." },
+                    { text: "$\frac{x^3}{3}$", correct: false, rationale: "That is the integral of $x^2$, not the derivative." }
                 ]
             },
             {
                 id: 2,
-                category: "Git Concepts",
-                question: "What does git rebase do compared to git merge?",
+                category: "Physics Demo",
+                question: "The kinetic energy of an object is given by $KE = \frac{1}{2}mv^2$. If mass $m$ doubles while velocity $v$ stays constant, what happens to $KE$?",
                 options: [
-                    { text: "It creates a new merge commit preserving all history", correct: false, rationale: "That is what git merge does. Merge preserves the exact branch history including all merge commits." },
-                    { text: "It moves your branch to the tip of another branch and replays your commits", correct: true, rationale: "Correct! Rebase rewrites history by moving your branch base commit to the target branch tip, then replaying your changes. This creates a linear history but rewrites commit hashes." },
-                    { text: "It deletes the current branch", correct: false, rationale: "git branch -d deletes branches. Rebase is about history manipulation, not deletion." },
-                    { text: "It stashes all uncommitted changes", correct: false, rationale: "git stash handles uncommitted changes. Rebase works with committed changes on a branch." }
+                    { text: "It stays the same", correct: false, rationale: "$KE$ is directly proportional to mass. If $m$ doubles, $KE$ must change." },
+                    { text: "It doubles", correct: true, rationale: "Correct! Since $KE \propto m$, doubling $m$ while keeping $v$ constant doubles the kinetic energy." },
+                    { text: "It quadruples", correct: false, rationale: "That would happen if velocity doubled, not mass. $KE \propto v^2$ but only $\propto m^1$." },
+                    { text: "It halves", correct: false, rationale: "Inverse relationship would mean $KE \propto \frac{1}{m}$, which is not the case." }
                 ]
             },
             {
                 id: 3,
-                category: "GitHub Actions",
-                question: "When does a GitHub Actions workflow trigger by default?",
+                category: "Chemistry Demo",
+                question: "Balance the equation: $$\ce{H2 + O2 -> H2O}$$ What coefficient goes in front of $\ce{H2O}$?",
                 options: [
-                    { text: "Only when manually clicked in the Actions tab", correct: false, rationale: "While you CAN trigger workflows manually with workflow_dispatch, most workflows run automatically on events." },
-                    { text: "On every commit push, PR, or specified event in the YAML file", correct: true, rationale: "Correct! Workflows are event-driven. You define triggers like on: push, on: pull_request, or on: schedule in your .github/workflows/*.yml file." },
-                    { text: "Every day at midnight automatically", correct: false, rationale: "Scheduled triggers require explicit on: schedule: cron configuration. They do not run by default." },
-                    { text: "Only when the repository owner is online", correct: false, rationale: "GitHub Actions run on GitHub cloud infrastructure, independent of anyone online status." }
-                ]
-            },
-            {
-                id: 4,
-                category: "Branching Strategy",
-                question: "What is GitHub Flow branching strategy?",
-                options: [
-                    { text: "A complex model with develop, release, and hotfix branches", correct: false, rationale: "That describes GitFlow. GitHub Flow is intentionally simpler than GitFlow." },
-                    { text: "A lightweight model: create branch, commit, PR, review, merge to main", correct: true, rationale: "Correct! GitHub Flow is simple: create a feature branch from main, make commits, open a PR, get review, merge to main, deploy. Perfect for continuous deployment." },
-                    { text: "A strategy that forbids any branching", correct: false, rationale: "Trunk-based development minimizes branches, but GitHub Flow explicitly uses feature branches for every change." },
-                    { text: "A paid GitHub Enterprise-only feature", correct: false, rationale: "GitHub Flow is a workflow pattern, not a feature. It is free and works on any GitHub repo." }
-                ]
-            },
-            {
-                id: 5,
-                category: "Security",
-                question: "What should you do if you accidentally commit a secret/API key to GitHub?",
-                options: [
-                    { text: "Just delete the file in the next commit", correct: false, rationale: "Deleting in a new commit does not remove it from Git history. The secret remains visible in previous commits forever." },
-                    { text: "Rewrite history to remove it, rotate the secret, and enable secret scanning", correct: true, rationale: "Correct! You must use git filter-repo or BFG to rewrite history, immediately rotate/revoke the exposed credential, and enable GitHub Secret Scanning to prevent future leaks." },
-                    { text: "Make the repository private temporarily", correct: false, rationale: "Making it private does not remove the secret from history. Anyone with prior access or forks still has it." },
-                    { text: "Contact GitHub support to delete the commit", correct: false, rationale: "GitHub Support will not rewrite your history for you. You need to do it yourself or use automated tools." }
+                    { text: "1", correct: false, rationale: "$\ce{H2 + O2 -> H2O}$ leaves one oxygen atom unaccounted for on the right." },
+                    { text: "2", correct: true, rationale: "Correct! The balanced equation is $\ce{2H2 + O2 -> 2H2O}$. Two water molecules are needed to balance the oxygen." },
+                    { text: "3", correct: false, rationale: "That would give 3 oxygen atoms on the right, but we only have 2 on the left." },
+                    { text: "4", correct: false, rationale: "Too many. The simplest whole-number ratio uses 2 water molecules." }
                 ]
             }
         ];
 
+        // ==================== MATH RENDERING ====================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderMath(text) {
+            if (!text || typeof text !== 'string') return text;
+            let html = escapeHtml(text);
+
+            // Display math: $$...$$
+            html = html.replace(/\$\$([\s\S]+?)\$\$/g, (match, latex) => {
+                try {
+                    return katex.renderToString(latex.trim(), { throwOnError: false, displayMode: true });
+                } catch (e) { return match; }
+            });
+
+            // Inline math: $...$
+            html = html.replace(/\$([^$
+]+?)\$/g, (match, latex) => {
+                try {
+                    return katex.renderToString(latex.trim(), { throwOnError: false, displayMode: false });
+                } catch (e) { return match; }
+            });
+
+            return html;
+        }
+
+        // ==================== FIREBASE ====================
         async function initFirebase() {
             try {
                 firebase.initializeApp(firebaseConfig);
@@ -1017,7 +1048,7 @@
             if (!answered) answered = scores[currentIndex] !== undefined;
 
             document.getElementById('categoryTag').textContent = q.category;
-            document.getElementById('questionText').textContent = q.question;
+            document.getElementById('questionText').innerHTML = renderMath(q.question);
             document.getElementById('hintText').textContent = answered ? 'Answered — see explanation above' : 'Select the best answer below';
             document.getElementById('flashcard').classList.remove('flipped');
 
@@ -1028,7 +1059,7 @@
                 const btn = document.createElement('button');
                 btn.className = 'choice-btn';
                 const letter = String.fromCharCode(65 + idx);
-                btn.innerHTML = `<span class="choice-letter">${letter}.</span> ${opt.text}<span class="choice-indicator"></span>`;
+                btn.innerHTML = `<span class="choice-letter">${letter}.</span> ${renderMath(opt.text)}<span class="choice-indicator"></span>`;
 
                 if (answered) {
                     btn.disabled = true;
@@ -1111,8 +1142,8 @@
                 const icon = opt.correct ? '✓' : '✗';
                 html += `
                     <div class="rationalization-item ${type}">
-                        <div class="opt-label">${icon} Option ${letter}: ${opt.text}</div>
-                        <div class="opt-rationale">${opt.rationale}</div>
+                        <div class="opt-label">${icon} Option ${letter}: ${renderMath(opt.text)}</div>
+                        <div class="opt-rationale">${renderMath(opt.rationale)}</div>
                     </div>
                 `;
             });
