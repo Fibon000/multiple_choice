@@ -427,6 +427,15 @@
             80% { transform: translateX(6px); }
         }
 
+        .choice-btn:disabled {
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .choice-wrapper.answered {
+            cursor: pointer;
+        }
+
         .choice-indicator {
             position: absolute;
             right: 24px;
@@ -1240,6 +1249,7 @@
 
                 if (answered) {
                     btn.disabled = true;
+                    wrapper.classList.add('answered');
                     const correctIdx = q.options.findIndex(o => o.correct);
                     const selectedIdx = selectedAnswers[currentIndex];
                     if (idx === correctIdx) {
@@ -1259,7 +1269,15 @@
                     const rat = document.createElement('div');
                     rat.className = 'choice-rationale';
                     rat.innerHTML = renderMath(opt.rationale);
+                    // Only the selected answer shows its rationale at first
+                    rat.style.display = (idx === selectedIdx) ? 'block' : 'none';
                     wrapper.appendChild(rat);
+
+                    // Tap any other choice to reveal/hide its rationale
+                    wrapper.addEventListener('click', () => {
+                        if (idx === selectedIdx) return; // selected stays open
+                        rat.style.display = rat.style.display === 'none' ? 'block' : 'none';
+                    });
                 } else {
                     btn.onclick = () => selectAnswer(idx);
                 }
