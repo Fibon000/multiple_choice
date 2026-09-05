@@ -344,6 +344,7 @@
 
         .choice-btn:disabled {
             cursor: default;
+            pointer-events: none;
         }
 
         .choice-btn.correct {
@@ -361,8 +362,7 @@
             color: #c62828;
         }
 
-        .choice-btn.selected-wrong {
-            animation: shake 0.5s ease;
+        .choice-btn.first-wrong {
             background: #ffcdd2;
             color: #b71c1c;
             font-weight: 700;
@@ -1039,6 +1039,7 @@
         let answered = false;
         let selectedAnswers = {};
         let scores = {};
+        let revealedAnswers = {};
         let editingId = null;
         let editorUnlocked = false;
 
@@ -1247,38 +1248,60 @@
                 const letter = String.fromCharCode(65 + idx);
                 btn.innerHTML = `<span class="choice-letter">${letter}.</span> ${renderMath(opt.text)}<span class="choice-indicator"></span>`;
 
+                const rat = document.createElement('div');
+                rat.className = 'choice-rationale';
+                rat.innerHTML = renderMath(opt.rationale);
+
                 if (answered) {
                     btn.disabled = true;
                     wrapper.classList.add('answered');
-                    const correctIdx = q.options.findIndex(o => o.correct);
-                    const selectedIdx = selectedAnswers[currentIndex];
-                    if (idx === correctIdx) {
-                        btn.classList.add('correct');
-                        wrapper.classList.add('correct-card');
-                        btn.querySelector('.choice-indicator').textContent = '✓';
-                    } else if (idx === selectedIdx && !scores[currentIndex]) {
-                        btn.classList.add('incorrect', 'selected-wrong');
-                        wrapper.classList.add('wrong-card');
-                        btn.querySelector('.choice-indicator').textContent = '✗';
+                    wrapper.style.cursor = 'pointer';
+                    
+                    const firstPick = selectedAnswers[currentIndex];
+                    const revealed = revealedAnswers[currentIndex] || new Set();
+                    const isRevealed = revealed.has(idx);
+                    const isCorrect = opt.correct;
+
+                    if (isRevealed) {
+                        if (isCorrect) {
+                            btn.classList.add('correct');
+                            wrapper.classList.add('correct-card');
+                            btn.querySelector('.choice-indicator').textContent = '✓';
+                        } else {
+                            btn.classList.add('incorrect', 'first-wrong');
+                            if (idx === firstPick) btn.classList.add('selected-wrong');
+                            wrapper.classList.add('wrong-card');
+                            btn.querySelector('.choice-indicator').textContent = '✗';
+                        }
+                        rat.style.display = 'block';
                     } else {
-                        btn.classList.add('incorrect');
-                        wrapper.classList.add('wrong-card');
-                        btn.style.opacity = '0.6';
+                        btn.style.opacity = '0.5';
+                        rat.style.display = 'none';
                     }
 
-                    const rat = document.createElement('div');
-                    rat.className = 'choice-rationale';
-                    rat.innerHTML = renderMath(opt.rationale);
-                    // Only the selected answer shows its rationale at first
-                    rat.style.display = (idx === selectedIdx) ? 'block' : 'none';
                     wrapper.appendChild(rat);
 
-                    // Tap any other choice to reveal/hide its rationale
                     wrapper.addEventListener('click', () => {
-                        if (idx === selectedIdx) return; // selected stays open
-                        rat.style.display = rat.style.display === 'none' ? 'block' : 'none';
+                        if (!revealedAnswers[currentIndex]) revealedAnswers[currentIndex] = new Set();
+                        if (revealedAnswers[currentIndex].has(idx)) return;
+                        
+                        revealedAnswers[currentIndex].add(idx);
+                        rat.style.display = 'block';
+                        
+                        if (opt.correct) {
+                            btn.classList.add('correct');
+                            wrapper.classList.add('correct-card');
+                            btn.querySelector('.choice-indicator').textContent = '✓';
+                        } else {
+                            btn.classList.add('incorrect');
+                            wrapper.classList.add('wrong-card');
+                            btn.querySelector('.choice-indicator').textContent = '✗';
+                        }
+                        btn.style.opacity = '1';
                     });
                 } else {
+                    wrapper.appendChild(rat);
+                    rat.style.display = 'none';
                     btn.onclick = () => selectAnswer(idx);
                 }
 
@@ -1292,12 +1315,22 @@
         }
 
         function selectAnswer(selectedIdx) {
-            if (answered) return;
+            if (answered) {
+                if (!revealedAnswers[currentIndex]) revealedAnswers[currentIndex] = new Set();
+                revealedAnswers[currentIndex].add(selectedIdx);
+                renderQuestion();
+                return;
+            }
+            
             const q = questions[currentIndex];
             const correctIdx = q.options.findIndex(o => o.correct);
             const isCorrect = selectedIdx === correctIdx;
+            
             scores[currentIndex] = isCorrect;
             selectedAnswers[currentIndex] = selectedIdx;
+            if (!revealedAnswers[currentIndex]) revealedAnswers[currentIndex] = new Set();
+            revealedAnswers[currentIndex].add(selectedIdx);
+            
             answered = true;
             renderQuestion();
             document.getElementById('nextBtn').disabled = false;
@@ -1381,6 +1414,7 @@
             currentIndex = 0;
             scores = {};
             selectedAnswers = {};
+            revealedAnswers = {};
             answered = false;
             document.getElementById('completionScreen').classList.remove('show');
             renderQuestion();
@@ -1392,6 +1426,7 @@
             if (!confirm('Reset your progress?')) return;
             scores = {};
             selectedAnswers = {};
+            revealedAnswers = {};
             currentIndex = 0;
             answered = false;
             renderQuestion();
